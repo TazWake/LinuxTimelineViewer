@@ -1,7 +1,5 @@
 ---
-description: General Workflow Rules
-globs:
-alwaysApply: false
+alwaysApply: true
 ---
 - Focus on the area of code relevant to the task.
 - Do not touch code unrelated to the task.
