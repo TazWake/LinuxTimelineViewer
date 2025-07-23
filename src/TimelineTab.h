@@ -15,6 +15,10 @@ class TimelineTab : public QWidget {
 public:
     TimelineTab(const QString& filePath, QWidget* parent = nullptr);
     ~TimelineTab();
+    void setFontSize(int pointSize);
+    void setLineHeight(int px);
+    QStringList columnNames() const;
+    bool search(const QString& column, const QString& term);
 
 private slots:
     void onSearchRequested(const QString& column, const QString& term);
@@ -25,5 +29,8 @@ private:
     QStatusBar* statusBar;
     TimelineModel* model;
     QSortFilterProxyModel* proxyModel;
-    void updateStatus();
+    int fontSize = 10;
+    int lineHeight = 20;
+    void updateStatus(const QString& msg = QString());
+    void updateFilterBarColumns();
 }; 

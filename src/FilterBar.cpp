@@ -4,6 +4,7 @@ FilterBar::FilterBar(QWidget* parent)
     : QWidget(parent)
 {
     columnPicker = new QComboBox(this);
+    columnPicker->setToolTip("Select a column to search, or choose 'All Columns' to search the entire table.");
     input = new QLineEdit(this);
     searchButton = new QPushButton("Search", this);
     QHBoxLayout* layout = new QHBoxLayout(this);

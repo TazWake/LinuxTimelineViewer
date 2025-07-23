@@ -1,5 +1,6 @@
 #include "TimelineTab.h"
 #include <QHeaderView>
+#include <QFont>
 
 TimelineTab::TimelineTab(const QString& filePath, QWidget* parent)
     : QWidget(parent)
@@ -20,22 +21,85 @@ TimelineTab::TimelineTab(const QString& filePath, QWidget* parent)
     layout->addWidget(statusBar);
     setLayout(layout);
     connect(filterBar, &FilterBar::searchRequested, this, &TimelineTab::onSearchRequested);
+    updateFilterBarColumns();
     updateStatus();
 }
 
 TimelineTab::~TimelineTab() {}
 
-void TimelineTab::onSearchRequested(const QString& column, const QString& term)
+void TimelineTab::updateFilterBarColumns()
 {
-    int col = model->columnIndex(column);
-    if (col >= 0) {
-        proxyModel->setFilterKeyColumn(col);
-        proxyModel->setFilterFixedString(term);
-    }
-    updateStatus();
+    QStringList cols = model->headerData(0, Qt::Horizontal, Qt::DisplayRole).toStringList();
+    if (cols.isEmpty())
+        cols = model->headerData(0, Qt::Horizontal, Qt::DisplayRole).toString().split(",");
+    if (cols.isEmpty())
+        cols = model->columnCount() > 0 ? QStringList() : QStringList();
+    for (int i = 0; i < model->columnCount(); ++i)
+        cols << model->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString();
+    cols.removeDuplicates();
+    cols.removeAll("");
+    cols.prepend("All Columns");
+    filterBar->setColumns(cols);
 }
 
-void TimelineTab::updateStatus()
+QStringList TimelineTab::columnNames() const
 {
-    statusBar->showMessage(QString("Rows: %1").arg(proxyModel->rowCount()));
+    QStringList cols;
+    for (int i = 0; i < model->columnCount(); ++i)
+        cols << model->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString();
+    return cols;
+}
+
+void TimelineTab::onSearchRequested(const QString& column, const QString& term)
+{
+    bool found = search(column, term);
+    if (!found) {
+        updateStatus("No matches found.");
+    } else {
+        updateStatus();
+    }
+}
+
+bool TimelineTab::search(const QString& column, const QString& term)
+{
+    if (term.isEmpty()) {
+        proxyModel->setFilterFixedString("");
+        return false;
+    }
+    if (column == "All Columns") {
+        proxyModel->setFilterKeyColumn(-1);
+        proxyModel->setFilterRegExp(QRegExp(term, Qt::CaseInsensitive, QRegExp::FixedString));
+        return proxyModel->rowCount() > 0;
+    } else {
+        int col = model->columnIndex(column);
+        if (col >= 0) {
+            proxyModel->setFilterKeyColumn(col);
+            proxyModel->setFilterFixedString(term);
+            return proxyModel->rowCount() > 0;
+        }
+    }
+    return false;
+}
+
+void TimelineTab::setFontSize(int pointSize)
+{
+    fontSize = pointSize;
+    QFont f = tableView->font();
+    f.setPointSize(pointSize);
+    tableView->setFont(f);
+}
+
+void TimelineTab::setLineHeight(int px)
+{
+    lineHeight = px;
+    tableView->verticalHeader()->setDefaultSectionSize(px);
+}
+
+void TimelineTab::updateStatus(const QString& msg)
+{
+    if (!msg.isEmpty()) {
+        statusBar->showMessage(msg);
+    } else {
+        statusBar->showMessage(QString("Rows: %1").arg(proxyModel->rowCount()));
+    }
 } 

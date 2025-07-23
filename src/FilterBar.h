@@ -16,6 +16,8 @@ public:
 
 signals:
     void searchRequested(const QString& column, const QString& term);
+    // Future: void fontSizeChanged(int pointSize);
+    // Future: void lineHeightChanged(int px);
 
 private slots:
     void onSearchClicked();

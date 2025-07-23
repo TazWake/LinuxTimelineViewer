@@ -18,10 +18,23 @@ public:
 
 private slots:
     void openFile();
+    void increaseFontSize();
+    void decreaseFontSize();
+    void increaseLineHeight();
+    void decreaseLineHeight();
+    void resetFontAndLineHeight();
 
 private:
     QTabWidget* tabs;
     QAction* openAction;
     QAction* exitAction;
+    QAction* fontIncAction;
+    QAction* fontDecAction;
+    QAction* lineIncAction;
+    QAction* lineDecAction;
+    QAction* resetFontAction;
     void setupMenu();
+    void applyFontAndLineHeight();
+    int currentFontSize = 10;
+    int currentLineHeight = 20;
 }; 
