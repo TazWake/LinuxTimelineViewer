@@ -1,2 +1,3 @@
 # LinuxTimelineViewer
-A tool to view timelines running on Linux
+
+This is an initial experiment to see if it is possible to create a timeline viewing tool to run on Linux.
