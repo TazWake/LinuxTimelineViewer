@@ -44,6 +44,15 @@ To open a timeline file:
 ```bash
 ./build/bin/timeline-explorer data/test_files/FILESYSTEM.txt
 ```
+
+### Currently supported method:
+
+`./build/bin/timeline-explorer` 
+
+then file open menu.
+
+
+
 Or use the File → Open menu in the application.
 
 ## Project Structure
