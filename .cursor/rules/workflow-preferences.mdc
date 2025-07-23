@@ -1,0 +1,10 @@
+---
+description: General Workflow Rules
+globs:
+alwaysApply: false
+---
+- Focus on the area of code relevant to the task.
+- Do not touch code unrelated to the task.
+- Avoid making major changes to the patterns and architecture of how a feature works, after it has been shown to work well, unless explicitly instructed.
+- Always think about what other methods and areas of code might be affected by code changes.
+- If an instruction or requirement doesn't make sense in the context, ask specific questions to clarify.
