@@ -98,15 +98,38 @@ void AppWindow::showSearchDialog(bool allTabs)
         QSet<QString> colSet;
         for (int i = 0; i < tabs->count(); ++i) {
             TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->widget(i));
-            if (tab) colSet.unite(QSet<QString>(tab->columnNames().begin(), tab->columnNames().end()));
+            if (!tab) {
+                qWarning() << "Null TimelineTab at index" << i;
+                continue;
+            }
+            QStringList tabCols = tab->columnNames();
+            for (const QString& col : tabCols) {
+                if (!col.isNull() && !col.trimmed().isEmpty())
+                    colSet.insert(col.trimmed());
+                else
+                    qWarning() << "Skipping empty or null column in tab" << i;
+            }
         }
         allColumns = QStringList(colSet.begin(), colSet.end());
     } else {
         TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->currentWidget());
-        if (tab) allColumns = tab->columnNames();
+        if (tab) {
+            QStringList tabCols = tab->columnNames();
+            for (const QString& col : tabCols) {
+                if (!col.isNull() && !col.trimmed().isEmpty())
+                    allColumns << col.trimmed();
+                else
+                    qWarning() << "Skipping empty or null column in current tab";
+            }
+        }
     }
     allColumns.removeAll("");
+    allColumns.removeDuplicates();
     allColumns.sort();
+    if (allColumns.isEmpty()) {
+        statusBar()->showMessage("No columns available for search.");
+        return;
+    }
     allColumns.prepend("All Columns");
 
     // Dialog
