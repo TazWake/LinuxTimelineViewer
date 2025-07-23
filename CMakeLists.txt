@@ -10,8 +10,8 @@ set(BUILD_STATIC ON CACHE BOOL "Build statically against Qt")
 # Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Find Qt5
-find_package(Qt5 5.15.13 REQUIRED COMPONENTS Widgets Gui Core)
+# Find Qt5 (add Xml module)
+find_package(Qt5 5.15.13 REQUIRED COMPONENTS Widgets Gui Core Xml)
 
 # Collect all source files
 file(GLOB_RECURSE SOURCES
@@ -24,12 +24,12 @@ file(GLOB_RECURSE HEADERS
 # Add executable
 add_executable(timeline-explorer ${SOURCES} ${HEADERS})
 
-# Link Qt5 libraries
+# Link Qt5 libraries (add Qt5::Xml)
 if(BUILD_STATIC)
     set_target_properties(timeline-explorer PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_link_libraries(timeline-explorer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core)
+    target_link_libraries(timeline-explorer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core Qt5::Xml)
 else()
-    target_link_libraries(timeline-explorer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core)
+    target_link_libraries(timeline-explorer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core Qt5::Xml)
 endif()
 
 # Include directories
