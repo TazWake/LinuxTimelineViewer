@@ -1,6 +1,6 @@
 # LinuxTimelineViewer
 
-LinuxTimelineViewer is a Qt6-based C++ application for visualizing large forensic timeline CSV files in a tabbed GUI. It is designed for efficient handling of multi-GB files and supports both Filesystem and Super timeline formats.
+LinuxTimelineViewer is a Qt5.15.13-based C++ application for visualizing large forensic timeline CSV files in a tabbed GUI. It is designed for efficient handling of multi-GB files and supports both Filesystem and Super timeline formats.
 
 ## Features
 - Multi-tab viewing (one file per tab)
@@ -16,7 +16,7 @@ LinuxTimelineViewer is a Qt6-based C++ application for visualizing large forensi
 **Requirements:**
 - C++17
 - CMake 3.16+
-- Qt 6 (built statically)
+- Qt 5.15.13 (built statically)
 
 **Build:**
 ```bash
@@ -27,7 +27,7 @@ mkdir -p ~/Projects/linuxtimelineviewer && cd ~/Projects/linuxtimelineviewer
 mkdir build && cd build
 
 # Set static Qt if needed
-export CMAKE_PREFIX_PATH=/opt/Qt-static/lib/cmake
+export CMAKE_PREFIX_PATH=/opt/Qt5.15.13-static/lib/cmake
 
 # Run cmake with static flags
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC=ON

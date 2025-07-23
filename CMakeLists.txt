@@ -10,8 +10,8 @@ set(BUILD_STATIC ON CACHE BOOL "Build statically against Qt")
 # Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Find Qt6
-find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
+# Find Qt5
+find_package(Qt5 5.15.13 REQUIRED COMPONENTS Widgets Gui Core)
 
 # Collect all source files
 file(GLOB_RECURSE SOURCES
@@ -24,23 +24,24 @@ file(GLOB_RECURSE HEADERS
 # Add executable
 add_executable(timeline-explorer ${SOURCES} ${HEADERS})
 
-# Link Qt6 libraries
+# Link Qt5 libraries
 if(BUILD_STATIC)
     set_target_properties(timeline-explorer PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_link_libraries(timeline-explorer PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core)
+    target_link_libraries(timeline-explorer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core)
 else()
-    target_link_libraries(timeline-explorer PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core)
+    target_link_libraries(timeline-explorer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core)
 endif()
 
 # Include directories
 target_include_directories(timeline-explorer PRIVATE src src/utils)
 
 # Add resources (icons, etc.)
-qt_add_resources(timeline-explorer resources/icons.qrc)
+qt5_add_resources(APP_RESOURCES resources/icons.qrc)
+target_sources(timeline-explorer PRIVATE ${APP_RESOURCES})
 
 # Install rules (optional)
 install(TARGETS timeline-explorer DESTINATION bin)
 
 # Notes:
-# - To build statically, ensure you have a static Qt6 build and set CMAKE_PREFIX_PATH accordingly.
+# - To build statically, ensure you have a static Qt5.15.13 build and set CMAKE_PREFIX_PATH accordingly.
 # - Out-of-source builds are supported (use a separate build/ directory). 
