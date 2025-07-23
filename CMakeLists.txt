@@ -4,6 +4,9 @@ project(linuxtimelineviewer VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable Qt MOC for QObject subclasses
+set(CMAKE_AUTOMOC ON)
+
 # Enable static Qt build
 set(BUILD_STATIC ON CACHE BOOL "Build statically against Qt")
 
