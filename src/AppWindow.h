@@ -4,6 +4,12 @@
 #include <QMenuBar>
 #include <QAction>
 #include <QFileDialog>
+#include <QInputDialog>
+#include <QComboBox>
+#include <QDialog>
+#include <QLineEdit>
+#include <QLabel>
+#include <QDialogButtonBox>
 
 class TimelineTab;
 
@@ -23,6 +29,8 @@ private slots:
     void increaseLineHeight();
     void decreaseLineHeight();
     void resetFontAndLineHeight();
+    void searchInCurrentTab();
+    void searchInAllTabs();
 
 private:
     QTabWidget* tabs;
@@ -33,8 +41,11 @@ private:
     QAction* lineIncAction;
     QAction* lineDecAction;
     QAction* resetFontAction;
+    QAction* searchCurrentTabAction;
+    QAction* searchAllTabsAction;
     void setupMenu();
     void applyFontAndLineHeight();
     int currentFontSize = 10;
     int currentLineHeight = 20;
+    void showSearchDialog(bool allTabs);
 }; 
