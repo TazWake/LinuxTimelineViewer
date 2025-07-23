@@ -26,11 +26,10 @@ private slots:
     void openFile();
     void increaseFontSize();
     void decreaseFontSize();
-    void increaseLineHeight();
-    void decreaseLineHeight();
     void resetFontAndLineHeight();
     void searchInCurrentTab();
     void searchInAllTabs();
+    void clearSearch();
 
 private:
     QTabWidget* tabs;
@@ -38,11 +37,10 @@ private:
     QAction* exitAction;
     QAction* fontIncAction;
     QAction* fontDecAction;
-    QAction* lineIncAction;
-    QAction* lineDecAction;
     QAction* resetFontAction;
     QAction* searchCurrentTabAction;
     QAction* searchAllTabsAction;
+    QAction* clearSearchAction;
     void setupMenu();
     void applyFontAndLineHeight();
     int currentFontSize = 10;

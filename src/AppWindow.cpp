@@ -1,6 +1,7 @@
 #include "AppWindow.h"
 #include "TimelineTab.h"
 #include <QMessageBox>
+#include <QDebug>
 
 AppWindow::AppWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -29,29 +30,26 @@ void AppWindow::setupMenu()
     QMenu* viewMenu = menuBar->addMenu("&View");
     fontIncAction = new QAction("Increase Font Size", this);
     fontDecAction = new QAction("Decrease Font Size", this);
-    lineIncAction = new QAction("Increase Line Height", this);
-    lineDecAction = new QAction("Decrease Line Height", this);
-    resetFontAction = new QAction("Reset Font/Line Height", this);
+    resetFontAction = new QAction("Reset Font", this);
     viewMenu->addAction(fontIncAction);
     viewMenu->addAction(fontDecAction);
-    viewMenu->addSeparator();
-    viewMenu->addAction(lineIncAction);
-    viewMenu->addAction(lineDecAction);
     viewMenu->addSeparator();
     viewMenu->addAction(resetFontAction);
     connect(fontIncAction, &QAction::triggered, this, &AppWindow::increaseFontSize);
     connect(fontDecAction, &QAction::triggered, this, &AppWindow::decreaseFontSize);
-    connect(lineIncAction, &QAction::triggered, this, &AppWindow::increaseLineHeight);
-    connect(lineDecAction, &QAction::triggered, this, &AppWindow::decreaseLineHeight);
     connect(resetFontAction, &QAction::triggered, this, &AppWindow::resetFontAndLineHeight);
 
     QMenu* searchMenu = menuBar->addMenu("&Search");
     searchCurrentTabAction = new QAction("Search in Current Tab...", this);
     searchAllTabsAction = new QAction("Search in All Tabs...", this);
+    clearSearchAction = new QAction("Clear Search", this);
     searchMenu->addAction(searchCurrentTabAction);
     searchMenu->addAction(searchAllTabsAction);
+    searchMenu->addSeparator();
+    searchMenu->addAction(clearSearchAction);
     connect(searchCurrentTabAction, &QAction::triggered, this, &AppWindow::searchInCurrentTab);
     connect(searchAllTabsAction, &QAction::triggered, this, &AppWindow::searchInAllTabs);
+    connect(clearSearchAction, &QAction::triggered, this, &AppWindow::clearSearch);
 }
 
 void AppWindow::openFile()
@@ -61,28 +59,36 @@ void AppWindow::openFile()
         return;
     TimelineTab* tab = new TimelineTab(fileName, this);
     tab->setFontSize(currentFontSize);
-    tab->setLineHeight(currentLineHeight);
     tabs->addTab(tab, QFileInfo(fileName).fileName());
     tabs->setCurrentWidget(tab);
 }
 
 void AppWindow::increaseFontSize() { currentFontSize = qMin(currentFontSize + 1, 32); applyFontAndLineHeight(); }
 void AppWindow::decreaseFontSize() { currentFontSize = qMax(currentFontSize - 1, 6); applyFontAndLineHeight(); }
-void AppWindow::increaseLineHeight() { currentLineHeight = qMin(currentLineHeight + 2, 80); applyFontAndLineHeight(); }
-void AppWindow::decreaseLineHeight() { currentLineHeight = qMax(currentLineHeight - 2, 10); applyFontAndLineHeight(); }
-void AppWindow::resetFontAndLineHeight() { currentFontSize = 10; currentLineHeight = 20; applyFontAndLineHeight(); }
+void AppWindow::resetFontAndLineHeight() { currentFontSize = 10; applyFontAndLineHeight(); }
 void AppWindow::applyFontAndLineHeight() {
     for (int i = 0; i < tabs->count(); ++i) {
         TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->widget(i));
         if (tab) {
             tab->setFontSize(currentFontSize);
-            tab->setLineHeight(currentLineHeight);
         }
     }
 }
 
 void AppWindow::searchInCurrentTab() { showSearchDialog(false); }
 void AppWindow::searchInAllTabs() { showSearchDialog(true); }
+
+void AppWindow::clearSearch() {
+    int cleared = 0;
+    for (int i = 0; i < tabs->count(); ++i) {
+        TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->widget(i));
+        if (tab) {
+            tab->search("All Columns", "");
+            ++cleared;
+        }
+    }
+    statusBar()->showMessage(QString("Cleared search in %1 tab(s)." ).arg(cleared));
+}
 
 void AppWindow::showSearchDialog(bool allTabs)
 {
@@ -130,20 +136,27 @@ void AppWindow::showSearchDialog(bool allTabs)
     int firstRow = -1;
     for (int i = 0; i < tabs->count(); ++i) {
         TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->widget(i));
-        if (tab) {
-            bool found = tab->search(col, term);
-            if (found) {
-                if (firstTabWithMatch == -1) {
-                    firstTabWithMatch = i;
-                    firstRow = 0; // Could be improved to select first match
-                }
-                totalMatches++;
+        if (!tab) {
+            qWarning() << "Null TimelineTab at index" << i;
+            continue;
+        }
+        bool found = false;
+        try {
+            found = tab->search(col, term);
+        } catch (...) {
+            qWarning() << "Exception during search in tab" << i;
+            continue;
+        }
+        if (found) {
+            if (firstTabWithMatch == -1) {
+                firstTabWithMatch = i;
+                firstRow = 0; // Could be improved to select first match
             }
+            totalMatches++;
         }
     }
     if (totalMatches > 0 && firstTabWithMatch != -1) {
         tabs->setCurrentIndex(firstTabWithMatch);
-        // Optionally, scroll/select first match
         statusBar()->showMessage(QString("%1 tab(s) matched for '%2'.").arg(totalMatches).arg(term));
     } else {
         statusBar()->showMessage("No matches found.");

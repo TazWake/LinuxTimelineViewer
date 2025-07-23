@@ -24,26 +24,26 @@ file(GLOB_RECURSE HEADERS
     src/*.h
 )
 
-# Add executable
-add_executable(timeline-explorer ${SOURCES} ${HEADERS})
+# Add executable (renamed)
+add_executable(LinuxTimelineViewer ${SOURCES} ${HEADERS})
 
 # Link Qt5 libraries (add Qt5::Xml)
 if(BUILD_STATIC)
-    set_target_properties(timeline-explorer PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_link_libraries(timeline-explorer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core Qt5::Xml)
+    set_target_properties(LinuxTimelineViewer PROPERTIES WIN32_EXECUTABLE TRUE)
+    target_link_libraries(LinuxTimelineViewer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core Qt5::Xml)
 else()
-    target_link_libraries(timeline-explorer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core Qt5::Xml)
+    target_link_libraries(LinuxTimelineViewer PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core Qt5::Xml)
 endif()
 
 # Include directories
-target_include_directories(timeline-explorer PRIVATE src src/utils)
+target_include_directories(LinuxTimelineViewer PRIVATE src src/utils)
 
 # Add resources (icons, etc.)
 qt5_add_resources(APP_RESOURCES resources/icons.qrc)
-target_sources(timeline-explorer PRIVATE ${APP_RESOURCES})
+target_sources(LinuxTimelineViewer PRIVATE ${APP_RESOURCES})
 
 # Install rules (optional)
-install(TARGETS timeline-explorer DESTINATION bin)
+install(TARGETS LinuxTimelineViewer DESTINATION bin)
 
 # Notes:
 # - To build statically, ensure you have a static Qt5.15.13 build and set CMAKE_PREFIX_PATH accordingly.
