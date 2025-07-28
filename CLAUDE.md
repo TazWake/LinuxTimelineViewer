@@ -36,6 +36,12 @@ make -j$(nproc)
 ### Windows Development Environment Note
 This codebase cannot be built or run on Windows systems. It requires Qt5.15.13+ and a Linux/Unix build environment. The application is specifically designed for forensic analysts working on Linux systems.
 
+### Git Configuration
+**IMPORTANT**: This user account has GPG signing enabled. All git commits must use the `-S` flag for signing:
+```bash
+git commit -S -m "commit message"
+```
+
 ## Architecture and Structure
 
 ### Core Components
