@@ -6,6 +6,7 @@
 #include <QSortFilterProxyModel>
 #include "FilterBar.h"
 #include "TimelineModel.h"
+#include "FieldDetailWindow.h"
 
 /**
  * @brief TimelineTab represents a single tab with a loaded timeline file.
@@ -22,6 +23,7 @@ public:
 
 private slots:
     void onSearchRequested(const QString& column, const QString& term);
+    void onTableDoubleClicked(const QModelIndex& index);
 
 private:
     FilterBar* filterBar;

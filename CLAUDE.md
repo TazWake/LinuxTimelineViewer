@@ -57,6 +57,7 @@ git commit -S -m "commit message"
 - Manages TimelineModel and QSortFilterProxyModel for data display
 - Handles column-based filtering and search highlighting
 - Supports font size and line height adjustments
+- Double-click on any cell opens FieldDetailWindow for expanded view
 
 **TimelineModel** (`src/TimelineModel.h/.cpp`): QAbstractTableModel implementation
 - File-backed model that doesn't load entire CSV into memory
@@ -73,6 +74,12 @@ git commit -S -m "commit message"
 **FilterBar** (`src/FilterBar.h/.cpp`): Search and filter UI widget
 - Column picker dropdown, search input field, and search button
 - Emits searchRequested signals for TimelineTab to handle
+
+**FieldDetailWindow** (`src/FieldDetailWindow.h/.cpp`): Popup dialog for field content
+- Resizable window displaying full content of a timeline field
+- Triggered by double-clicking any cell in the timeline table
+- Uses monospace font for optimal XML/JSON display
+- Non-modal to allow multiple detail windows simultaneously
 
 **Utils Components**:
 - **JsonXmlFormatter** (`src/utils/JsonXmlFormatter.h/.cpp`): Automatically detects and pretty-prints embedded JSON/XML in Super timeline message fields. Applied during data display in TimelineModel for column 4 (message field).

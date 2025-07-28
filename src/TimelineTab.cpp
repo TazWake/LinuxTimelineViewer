@@ -21,6 +21,7 @@ TimelineTab::TimelineTab(const QString& filePath, QWidget* parent)
     layout->addWidget(statusBar);
     setLayout(layout);
     connect(filterBar, &FilterBar::searchRequested, this, &TimelineTab::onSearchRequested);
+    connect(tableView, &QTableView::doubleClicked, this, &TimelineTab::onTableDoubleClicked);
     updateFilterBarColumns();
     updateStatus();
 }
@@ -93,6 +94,22 @@ void TimelineTab::setLineHeight(int px)
 {
     lineHeight = px;
     tableView->verticalHeader()->setDefaultSectionSize(px);
+}
+
+void TimelineTab::onTableDoubleClicked(const QModelIndex& index)
+{
+    if (!index.isValid()) return;
+    
+    // Get the column name for the title
+    QString columnName = model->headerData(index.column(), Qt::Horizontal, Qt::DisplayRole).toString();
+    
+    // Get the cell content (this will include XML/JSON formatting if applicable)
+    QString content = index.data(Qt::DisplayRole).toString();
+    
+    // Create and show the detail window
+    FieldDetailWindow* detailWindow = new FieldDetailWindow(columnName, content, this);
+    detailWindow->setAttribute(Qt::WA_DeleteOnClose); // Auto-delete when closed
+    detailWindow->show();
 }
 
 void TimelineTab::updateStatus(const QString& msg)
