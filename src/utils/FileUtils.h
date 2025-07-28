@@ -8,4 +8,5 @@
 namespace FileUtils {
     QString baseName(const QString& path);
     QStringList sniffCsvHeader(const QString& filePath);
+    QStringList parseCsvLine(const QString& line);
 } 

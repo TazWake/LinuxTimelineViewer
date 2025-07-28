@@ -1,4 +1,6 @@
 #include "TimelineModel.h"
+#include "utils/JsonXmlFormatter.h"
+#include "utils/FileUtils.h"
 #include <QTextStream>
 #include <QFileInfo>
 #include <QDebug>
@@ -20,7 +22,7 @@ void TimelineModel::detectFormat()
     }
     QTextStream in(&file);
     QString headerLine = in.readLine();
-    headers = headerLine.split(",");
+    headers = FileUtils::parseCsvLine(headerLine);
     if (headers == QStringList({"Date","Size","Type","Mode","UID","GID","Meta","File Name"}))
         timelineType = Filesystem;
     else if (headers == QStringList({"datetime","timestamp_desc","source","source_long","message","parser","display_name","tag"}))
@@ -65,11 +67,19 @@ QVariant TimelineModel::data(const QModelIndex& index, int role) const
     if (index.row() < 0 || index.row() >= lineOffsets.size())
         return QVariant();
     file.seek(lineOffsets[index.row()]);
-    QByteArray line = file.readLine();
-    QList<QByteArray> fields = line.trimmed().split(',');
+    QString line = QString::fromUtf8(file.readLine().trimmed());
+    QStringList fields = FileUtils::parseCsvLine(line);
     if (index.column() < 0 || index.column() >= fields.size())
         return QVariant();
-    return QString::fromUtf8(fields[index.column()]);
+    
+    QString cellData = fields[index.column()];
+    
+    // Apply JSON/XML formatting for message field in Super timelines
+    if (timelineType == Super && index.column() == 4) { // message field
+        return JsonXmlFormatter::formatIfApplicable(cellData);
+    }
+    
+    return cellData;
 }
 
 QVariant TimelineModel::headerData(int section, Qt::Orientation orientation, int role) const
