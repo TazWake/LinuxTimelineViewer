@@ -2,6 +2,7 @@
 #include "TimelineTab.h"
 #include <QMessageBox>
 #include <QDebug>
+#include <QFileInfo>
 
 AppWindow::AppWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -11,6 +12,7 @@ AppWindow::AppWindow(QWidget* parent)
     setupMenu();
     setWindowTitle("Linux Timeline Viewer");
     resize(1200, 800);
+    connect(tabs, &QTabWidget::currentChanged, this, &AppWindow::onTabChanged);
 }
 
 AppWindow::~AppWindow() {}
@@ -20,11 +22,16 @@ void AppWindow::setupMenu()
     QMenuBar* menuBar = this->menuBar();
     QMenu* fileMenu = menuBar->addMenu("&File");
     openAction = new QAction("&Open", this);
+    saveAction = new QAction("&Save", this);
+    saveAction->setShortcut(QKeySequence::Save);
+    saveAction->setEnabled(false);
     exitAction = new QAction("E&xit", this);
     fileMenu->addAction(openAction);
+    fileMenu->addAction(saveAction);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
     connect(openAction, &QAction::triggered, this, &AppWindow::openFile);
+    connect(saveAction, &QAction::triggered, this, &AppWindow::saveFile);
     connect(exitAction, &QAction::triggered, this, &QWidget::close);
 
     QMenu* viewMenu = menuBar->addMenu("&View");
@@ -61,6 +68,27 @@ void AppWindow::openFile()
     tab->setFontSize(currentFontSize);
     tabs->addTab(tab, QFileInfo(fileName).fileName());
     tabs->setCurrentWidget(tab);
+    updateWindowTitle();
+    
+    // Connect to model's dataChanged signal to update save action and window title
+    connect(tab->getModel(), &TimelineModel::dataChanged, this, [this](bool hasUnsaved) {
+        updateWindowTitle();
+        saveAction->setEnabled(hasUnsaved);
+    });
+}
+
+void AppWindow::saveFile()
+{
+    TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->currentWidget());
+    if (!tab) return;
+    
+    if (tab->saveChanges()) {
+        statusBar()->showMessage("Tags saved successfully.", 2000);
+        updateWindowTitle();
+        saveAction->setEnabled(false);
+    } else {
+        QMessageBox::warning(this, "Save Error", "Failed to save tags. Please check file permissions.");
+    }
 }
 
 void AppWindow::increaseFontSize() { currentFontSize = qMin(currentFontSize + 1, 32); applyFontAndLineHeight(); }
@@ -184,4 +212,88 @@ void AppWindow::showSearchDialog(bool allTabs)
     } else {
         statusBar()->showMessage("No matches found.");
     }
+}
+
+void AppWindow::onTabChanged(int index)
+{
+    updateWindowTitle();
+    if (index >= 0) {
+        TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->widget(index));
+        if (tab) {
+            saveAction->setEnabled(tab->hasUnsavedChanges());
+        }
+    } else {
+        saveAction->setEnabled(false);
+    }
+}
+
+void AppWindow::closeEvent(QCloseEvent* event)
+{
+    if (checkUnsavedChanges()) {
+        event->accept();
+    } else {
+        event->ignore();
+    }
+}
+
+bool AppWindow::checkUnsavedChanges()
+{
+    QStringList unsavedTabs;
+    for (int i = 0; i < tabs->count(); ++i) {
+        TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->widget(i));
+        if (tab && tab->hasUnsavedChanges()) {
+            unsavedTabs << tabs->tabText(i);
+        }
+    }
+    
+    if (unsavedTabs.isEmpty()) {
+        return true; // No unsaved changes, OK to close
+    }
+    
+    QString message = "You have unsaved changes in the following tabs:\n\n";
+    message += unsavedTabs.join("\n");
+    message += "\n\nDo you want to save your changes before exiting?";
+    
+    QMessageBox::StandardButton result = QMessageBox::question(
+        this, "Unsaved Changes", message,
+        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+        QMessageBox::Save
+    );
+    
+    if (result == QMessageBox::Save) {
+        // Save all unsaved tabs
+        bool allSaved = true;
+        for (int i = 0; i < tabs->count(); ++i) {
+            TimelineTab* tab = qobject_cast<TimelineTab*>(tabs->widget(i));
+            if (tab && tab->hasUnsavedChanges()) {
+                if (!tab->saveChanges()) {
+                    allSaved = false;
+                    QMessageBox::warning(this, "Save Error", 
+                        QString("Failed to save tags for %1. Please check file permissions.")
+                        .arg(tabs->tabText(i)));
+                }
+            }
+        }
+        return allSaved;
+    } else if (result == QMessageBox::Discard) {
+        return true; // Discard changes and close
+    } else {
+        return false; // Cancel close
+    }
+}
+
+void AppWindow::updateWindowTitle()
+{
+    QString title = "Linux Timeline Viewer";
+    
+    TimelineTab* currentTab = qobject_cast<TimelineTab*>(tabs->currentWidget());
+    if (currentTab) {
+        QString fileName = QFileInfo(currentTab->getFilePath()).fileName();
+        title += " - " + fileName;
+        if (currentTab->hasUnsavedChanges()) {
+            title += " *";
+        }
+    }
+    
+    setWindowTitle(title);
 } 

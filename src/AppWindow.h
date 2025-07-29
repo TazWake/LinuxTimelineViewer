@@ -10,6 +10,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QCloseEvent>
 
 class TimelineTab;
 
@@ -24,16 +25,22 @@ public:
 
 private slots:
     void openFile();
+    void saveFile();
     void increaseFontSize();
     void decreaseFontSize();
     void resetFontAndLineHeight();
     void searchInCurrentTab();
     void searchInAllTabs();
     void clearSearch();
+    void onTabChanged(int index);
+
+protected:
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     QTabWidget* tabs;
     QAction* openAction;
+    QAction* saveAction;
     QAction* exitAction;
     QAction* fontIncAction;
     QAction* fontDecAction;
@@ -46,4 +53,6 @@ private:
     int currentFontSize = 10;
     int currentLineHeight = 20;
     void showSearchDialog(bool allTabs);
+    bool checkUnsavedChanges();
+    void updateWindowTitle();
 }; 

@@ -6,7 +6,9 @@ LinuxTimelineViewer is a Qt5.15.13-based C++ application for visualizing large f
 - Multi-tab viewing (one file per tab)
 - Sorting and filtering by column
 - On-demand search with column picker
-- Pretty-printing of embedded XML/JSON in message fields
+- Row tagging with checkbox for Super timeline format
+- Tag persistence (saves to .tags file alongside original)
+- Unsaved changes tracking with exit prompt
 - Efficient file access: does not fully load files into RAM
 - Statically compiled (no runtime Qt dependencies)
 - Works on Ubuntu and RHEL

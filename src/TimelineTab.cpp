@@ -119,4 +119,24 @@ void TimelineTab::updateStatus(const QString& msg)
     } else {
         statusBar->showMessage(QString("Rows: %1").arg(proxyModel->rowCount()));
     }
+}
+
+bool TimelineTab::hasUnsavedChanges() const
+{
+    return model->hasUnsavedChanges();
+}
+
+bool TimelineTab::saveChanges()
+{
+    return model->saveTaggedRows();
+}
+
+TimelineModel* TimelineTab::getModel() const
+{
+    return model;
+}
+
+QString TimelineTab::getFilePath() const
+{
+    return model->getFilePath();
 } 

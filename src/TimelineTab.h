@@ -20,6 +20,10 @@ public:
     void setLineHeight(int px);
     QStringList columnNames() const;
     bool search(const QString& column, const QString& term);
+    bool hasUnsavedChanges() const;
+    bool saveChanges();
+    TimelineModel* getModel() const;
+    QString getFilePath() const;
 
 private slots:
     void onSearchRequested(const QString& column, const QString& term);

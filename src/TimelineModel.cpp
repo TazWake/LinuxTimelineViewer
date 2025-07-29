@@ -4,12 +4,15 @@
 #include <QTextStream>
 #include <QFileInfo>
 #include <QDebug>
+#include <QDir>
+#include <QStandardPaths>
 
 TimelineModel::TimelineModel(const QString& filePath, QObject* parent)
-    : QAbstractTableModel(parent), filePath(filePath), timelineType(Unknown), file(filePath)
+    : QAbstractTableModel(parent), filePath(filePath), timelineType(Unknown), file(filePath), unsavedChanges(false)
 {
     detectFormat();
     buildLineIndex();
+    loadTaggedRows();
 }
 
 TimelineModel::~TimelineModel() { file.close(); }
@@ -61,8 +64,27 @@ int TimelineModel::columnCount(const QModelIndex&) const
 
 QVariant TimelineModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || role != Qt::DisplayRole)
+    if (!index.isValid())
         return QVariant();
+    
+    // Handle tag column for Super timelines
+    if (timelineType == Super && index.column() == 7) { // tag column
+        if (role == Qt::CheckStateRole) {
+            return taggedRows.contains(index.row()) ? Qt::Checked : Qt::Unchecked;
+        }
+        if (role == Qt::DisplayRole) {
+            return QVariant(); // Don't show text for checkbox column
+        }
+    }
+    
+    // Handle background color for tagged rows
+    if (role == Qt::BackgroundRole && taggedRows.contains(index.row())) {
+        return QColor(240, 240, 240); // Light gray background for tagged rows
+    }
+    
+    if (role != Qt::DisplayRole)
+        return QVariant();
+        
     if (!file.isOpen()) file.open(QIODevice::ReadOnly | QIODevice::Text);
     if (index.row() < 0 || index.row() >= lineOffsets.size())
         return QVariant();
@@ -96,7 +118,116 @@ int TimelineModel::columnIndex(const QString& name) const
     return headers.indexOf(name);
 }
 
+bool TimelineModel::setData(const QModelIndex& index, const QVariant& value, int role)
+{
+    if (!index.isValid() || timelineType != Super || index.column() != 7)
+        return false;
+        
+    if (role == Qt::CheckStateRole) {
+        bool checked = value.toInt() == Qt::Checked;
+        setRowTagged(index.row(), checked);
+        return true;
+    }
+    return false;
+}
+
+Qt::ItemFlags TimelineModel::flags(const QModelIndex& index) const
+{
+    if (!index.isValid())
+        return Qt::NoItemFlags;
+        
+    Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    
+    // Make tag column checkable for Super timelines
+    if (timelineType == Super && index.column() == 7) {
+        flags |= Qt::ItemIsUserCheckable;
+    }
+    
+    return flags;
+}
+
 TimelineModel::TimelineType TimelineModel::type() const
 {
     return timelineType;
+}
+
+bool TimelineModel::isRowTagged(int row) const
+{
+    return taggedRows.contains(row);
+}
+
+void TimelineModel::setRowTagged(int row, bool tagged)
+{
+    if (tagged) {
+        if (!taggedRows.contains(row)) {
+            taggedRows.insert(row);
+            unsavedChanges = true;
+            emit dataChanged(createIndex(row, 0), createIndex(row, columnCount() - 1));
+            emit dataChanged(unsavedChanges);
+        }
+    } else {
+        if (taggedRows.contains(row)) {
+            taggedRows.remove(row);
+            unsavedChanges = true;
+            emit dataChanged(createIndex(row, 0), createIndex(row, columnCount() - 1));
+            emit dataChanged(unsavedChanges);
+        }
+    }
+}
+
+bool TimelineModel::hasUnsavedChanges() const
+{
+    return unsavedChanges;
+}
+
+bool TimelineModel::saveTaggedRows()
+{
+    QString tagFilePath = getTagFilePath();
+    QFile tagFile(tagFilePath);
+    
+    if (!tagFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Failed to open tag file for writing:" << tagFilePath;
+        return false;
+    }
+    
+    QTextStream out(&tagFile);
+    for (int row : taggedRows) {
+        out << row << "\n";
+    }
+    
+    unsavedChanges = false;
+    emit dataChanged(unsavedChanges);
+    return true;
+}
+
+QString TimelineModel::getFilePath() const
+{
+    return filePath;
+}
+
+void TimelineModel::loadTaggedRows()
+{
+    QString tagFilePath = getTagFilePath();
+    QFile tagFile(tagFilePath);
+    
+    if (!tagFile.exists() || !tagFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return; // No tag file exists, start with empty set
+    }
+    
+    QTextStream in(&tagFile);
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+        bool ok;
+        int row = line.toInt(&ok);
+        if (ok && row >= 0 && row < lineOffsets.size()) {
+            taggedRows.insert(row);
+        }
+    }
+}
+
+QString TimelineModel::getTagFilePath() const
+{
+    QFileInfo fileInfo(filePath);
+    QString tagFileName = fileInfo.completeBaseName() + ".tags";
+    return fileInfo.absolutePath() + QDir::separator() + tagFileName;
 } 
