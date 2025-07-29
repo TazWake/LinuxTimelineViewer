@@ -64,17 +64,51 @@ void AppWindow::openFile()
     QString fileName = QFileDialog::getOpenFileName(this, "Open Timeline File", QString(), "Timeline Files (*.csv *.txt)");
     if (fileName.isEmpty())
         return;
-    TimelineTab* tab = new TimelineTab(fileName, this);
-    tab->setFontSize(currentFontSize);
-    tabs->addTab(tab, QFileInfo(fileName).fileName());
-    tabs->setCurrentWidget(tab);
-    updateWindowTitle();
     
-    // Connect to model's dataChanged signal to update save action and window title
-    connect(tab->getModel(), &TimelineModel::dataChanged, this, [this](bool hasUnsaved) {
+    // Validate file before attempting to open
+    QFileInfo fileInfo(fileName);
+    if (!fileInfo.exists()) {
+        QMessageBox::warning(this, "File Error", "The selected file does not exist.");
+        return;
+    }
+    
+    if (!fileInfo.isReadable()) {
+        QMessageBox::warning(this, "File Error", "The selected file is not readable. Check file permissions.");
+        return;
+    }
+    
+    if (fileInfo.size() == 0) {
+        QMessageBox::warning(this, "File Error", "The selected file is empty.");
+        return;
+    }
+    
+    // Additional security checks
+    if (fileInfo.size() > 2LL * 1024 * 1024 * 1024) { // 2GB limit
+        QMessageBox::warning(this, "File Error", "The selected file is too large (over 2GB limit).");
+        return;
+    }
+    
+    try {
+        TimelineTab* tab = new TimelineTab(fileName, this);
+        tab->setFontSize(currentFontSize);
+        tabs->addTab(tab, fileInfo.fileName());
+        tabs->setCurrentWidget(tab);
         updateWindowTitle();
-        saveAction->setEnabled(hasUnsaved);
-    });
+        
+        // Connect to model's dataChanged signal to update save action and window title
+        connect(tab->getModel(), &TimelineModel::dataChanged, this, [this](bool hasUnsaved) {
+            updateWindowTitle();
+            saveAction->setEnabled(hasUnsaved);
+        });
+        
+        statusBar()->showMessage("File loaded successfully", 2000);
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Error Loading File", 
+            QString("Failed to load the timeline file: %1").arg(e.what()));
+    } catch (...) {
+        QMessageBox::critical(this, "Error Loading File", 
+            "An unexpected error occurred while loading the file.");
+    }
 }
 
 void AppWindow::saveFile()

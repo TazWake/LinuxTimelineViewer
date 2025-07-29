@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QFile>
 #include <QTextStream>
+#include <QDebug>
 
 namespace FileUtils {
 
@@ -20,8 +21,25 @@ QStringList sniffCsvHeader(const QString& filePath)
     return parseCsvLine(headerLine);
 }
 
+void validateCsvLine(const QString& line)
+{
+    if (line.length() > MAX_LINE_LENGTH) {
+        throw std::runtime_error("CSV line exceeds maximum length limit");
+    }
+}
+
+void validateFieldLength(const QString& field)
+{
+    if (field.length() > MAX_FIELD_LENGTH) {
+        throw std::runtime_error("CSV field exceeds maximum length limit");
+    }
+}
+
 QStringList parseCsvLine(const QString& line)
 {
+    // Validate input line length
+    validateCsvLine(line);
+    
     QStringList fields;
     QString current;
     bool inQuotes = false;
@@ -38,14 +56,29 @@ QStringList parseCsvLine(const QString& line)
         } else if (c == '"') {
             inQuotes = !inQuotes;
         } else if (c == ',' && !inQuotes) {
+            // Validate field length before adding
+            validateFieldLength(current);
             fields.append(current);
             current.clear();
+            
+            // Check maximum number of fields
+            if (fields.size() >= MAX_FIELDS_PER_LINE) {
+                throw std::runtime_error("CSV line exceeds maximum field count limit");
+            }
         } else {
             current += c;
+            
+            // Check field length during construction to fail early
+            if (current.length() > MAX_FIELD_LENGTH) {
+                throw std::runtime_error("CSV field exceeds maximum length limit");
+            }
         }
     }
     
+    // Validate the last field
+    validateFieldLength(current);
     fields.append(current);
+    
     return fields;
 }
 

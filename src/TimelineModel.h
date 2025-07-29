@@ -5,6 +5,11 @@
 #include <QFile>
 #include <QTextStream>
 #include <QSet>
+#include <QStandardPaths>
+#include <QDir>
+#include <QRegExp>
+#include <QMutex>
+#include <QMutexLocker>
 #include <memory>
 
 /**
@@ -38,15 +43,22 @@ signals:
     void dataChanged(bool hasUnsavedChanges);
 
 private:
+    // Security limits
+    static constexpr qint64 MAX_FILE_SIZE = 2LL * 1024 * 1024 * 1024;  // 2GB limit
+    static constexpr int MAX_LINE_COUNT = 10000000;  // 10 million lines
+    static constexpr qint64 MAX_INDEX_MEMORY = 500LL * 1024 * 1024;  // 500MB for index
     QString filePath;
     TimelineType timelineType;
     QStringList headers;
     QVector<qint64> lineOffsets; // File offsets for each line
     mutable QFile file;
+    mutable QMutex fileMutex; // Protect file operations
     QSet<int> taggedRows; // Set of tagged row indices
     bool unsavedChanges;
     void detectFormat();
     void buildLineIndex();
     void loadTaggedRows();
     QString getTagFilePath() const;
+    QString sanitizeFileName(const QString& fileName) const;
+    bool ensureTagDirectory() const;
 }; 
